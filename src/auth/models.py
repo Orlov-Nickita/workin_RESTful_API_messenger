@@ -2,9 +2,10 @@ import re
 import datetime
 import enum
 from phonenumbers import is_possible_number, parse
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum, Text
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import validates, relationship, Mapped
-from database import Base
+
+from src.database import Base
 
 
 class SexEnum(enum.Enum):
@@ -35,6 +36,7 @@ class User(Base):
     __tablename__ = 'User'
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     username = Column(String, unique=True)
+    password_hash = Column(String, nullable=False)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     phone = Column(String(20), nullable=False)
@@ -43,6 +45,18 @@ class User(Base):
     email = Column(String, nullable=False)
     
     avatar: Mapped["Avatar"] = relationship('Avatar', back_populates='user', lazy='joined', uselist=False)
+    
+    # def set_password(self, password: str):
+    #     """
+    #     TODO
+    #     """
+    #     self.password_hash = pwd_context.hash(password)
+    #
+    # def verify_password(self, password: str) -> bool:
+    #     """
+    #     TODO
+    #     """
+    #     return pwd_context.verify(password, self.password_hash)
     
     def __repr__(self):
         return f"User: {self.last_name} {self.first_name}"
@@ -74,14 +88,3 @@ class User(Base):
         if re.match(pattern, address):
             raise ValueError("Некорректный формат E-mail")
         return address
-
-
-class Message(Base):
-    """
-    TODO
-    """
-    __tablename__ = 'Message'
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    sender_id = Column(Integer, ForeignKey('User.id'), nullable=False)
-    recipient_id = Column(Integer, ForeignKey('User.id'), nullable=False)
-    content = Column(Text, nullable=False)

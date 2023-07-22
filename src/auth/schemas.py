@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, ConfigDict
-from models import SexEnum
+from src.auth.models import SexEnum
 
 
 class AvatarSchema(BaseModel):
@@ -22,3 +22,16 @@ class UserSchema(BaseModel):
     sex: SexEnum
     email: str
     avatar: Optional[AvatarSchema]
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class UserInDB(UserSchema):
+    password_hash: str
+
+
+class TokenData(BaseModel):
+    username: str | None = None
