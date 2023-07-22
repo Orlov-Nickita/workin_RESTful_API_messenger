@@ -1,23 +1,24 @@
-from datetime import date
-from pydantic import BaseModel
+from typing import Optional
+from pydantic import BaseModel, ConfigDict
 from models import SexEnum
 
 
 class AvatarSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     src: str
     alt: str
-    # created_at: date
 
 
 class UserSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     username: str
     first_name: str
     last_name: str
     phone: str
     sex: SexEnum
-    avatar_id: int
     email: str
-    avatar: AvatarSchema
-    
+    avatar: Optional[AvatarSchema]
