@@ -78,7 +78,7 @@ GRANT ALL PRIVILEGES ON DATABASE db_name TO username;
 # в соответствии с созданными пользователем и БД
 DB_NAME=name_of_postgresql_db
 DB_USER=username_for_access_to_postgresql_db
-DB_PASSWORD=password_for_access_to_postgresql_db
+DB_PASS=password_for_access_to_postgresql_db
 DB_HOST=host_for_postgresql_db
 DB_PORT=port_for_postgresql_db
 
