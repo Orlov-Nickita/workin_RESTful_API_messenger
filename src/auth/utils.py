@@ -1,8 +1,9 @@
+import os
+import uuid
 from datetime import timedelta, datetime
 from typing import Dict
-
 import aiofiles
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends, UploadFile
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy import select
@@ -11,7 +12,7 @@ from src.auth.models import User
 from src.database import get_async_session
 from .models import pwd_context
 from .schemas import UserInDB, TokenData
-from src.config import SECRET_KEY, ALGORITHM
+from src.config import SECRET_KEY, ALGORITHM, AVATARS_DIR
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
@@ -58,12 +59,12 @@ async def authenticate_user(username: str, password: str, session: AsyncSession)
     return user
 
 
-def create_access_token(data: Dict[str, User.username], expires_delta: timedelta | None = None) -> str:
+def create_access_token(data: Dict, expires_delta: timedelta | None = None) -> str:
     """
     Создание токена доступа
     
     Атрибуты:
-    data (Dict[str, User.username]): Словарь с ключом sub и значением - никнейм пользователя
+    data (Dict): Словарь с ключом sub и значением - никнейм пользователя
     expires_delta (timedelta | None = None): Время сгорания токена. По умолчанию None. Значение передается в минутах
     """
     to_encode = data.copy()
@@ -108,7 +109,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme),
     return user
 
 
-async def write_to_disk(content: bytes, file_path: str):
+async def write_to_disk(file: UploadFile) -> str:
     """
     Асинхронная функция скачивания файла
     
@@ -116,5 +117,15 @@ async def write_to_disk(content: bytes, file_path: str):
     content (bytes): Байтовая строка файла
     file_path (str): Путь, куда скачиваем
     """
-    async with aiofiles.open(file_path, mode='wb') as f:
-        await f.write(content)
+    avatar_name, avatar_extension = os.path.splitext(file.filename)
+    avatar_path: str = os.path.join(AVATARS_DIR, f'{avatar_name}{avatar_extension}')
+    
+    if os.path.exists(avatar_path):
+        avatar_name: str = avatar_name + '_' + str(uuid.uuid4())[:10]
+        avatar_path: str = os.path.join(AVATARS_DIR, f'{avatar_name}{avatar_extension}')
+    
+    file_read = await file.read()
+    async with aiofiles.open(avatar_path, mode='wb') as f:
+        await f.write(file_read)
+    
+    return f'{avatar_name}{avatar_extension}'

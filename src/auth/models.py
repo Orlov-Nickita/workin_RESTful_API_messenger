@@ -14,9 +14,9 @@ class SexEnum(enum.Enum):
     """
     Класс для перечисления, представляющий возможные значения атрибута "Пол"
     
-    Атрибуты:
-    - Man: представляет значение "Мужчина"
-    - Woman: представляет значение "Женщина"
+    Атрибуты:\n
+    Man: представляет значение "Мужчина"\n
+    Woman: представляет значение "Женщина"
     """
     Man = 'Man'
     Woman = 'Woman'
@@ -63,7 +63,7 @@ class User(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     phone = Column(String(20), nullable=False)
-    sex = Column(Enum(SexEnum), nullable=False)
+    sex = Column(Enum(SexEnum))
     avatar_id = Column(Integer, ForeignKey('Avatar.id'))
     email = Column(String, nullable=False)
     

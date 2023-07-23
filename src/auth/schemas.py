@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import Form, HTTPException
+from fastapi import HTTPException, Form
 from phonenumbers import is_possible_number, parse
 from phonenumbers.phonenumberutil import NumberParseException
 from pydantic import BaseModel, ConfigDict, constr, EmailStr, field_validator
@@ -122,6 +122,42 @@ class UserCreate(BaseUserSchema):
         cls.__signature__ = cls.__signature__.replace(
             parameters=[
                 arg.replace(default=Form(...))
+                for arg in cls.__signature__.parameters.values()
+            ]
+        )
+        return cls
+
+
+class UserChange(BaseModel):
+    """
+    Cхема модели Пользователь для внесения изменений в аккаунт
+
+    Атрибуты:
+    username (str): Никнейм
+    first_name (str): Имя
+    last_name (str): Фамилия
+    phone (str): Телефон
+    sex (SexEnum): Пол. Предполагается только 2 варианта
+    email (str): Электронная почта
+    """
+    username: Optional[str]
+    first_name: Optional[str]
+    last_name: Optional[str]
+    phone: Optional[str]
+    sex: Optional[SexEnum]
+    email: Optional[EmailStr]
+    password: constr(strip_whitespace=True, min_length=8)
+    new_password: Optional[constr(strip_whitespace=True, min_length=8)]
+    
+    @classmethod
+    def form_body(cls):
+        """
+        Изменяет сигнатуру класса, заменяя все параметры объектом Form(...)
+        """
+        cls.__signature__ = cls.__signature__.replace(
+            parameters=[
+                arg.replace(default=Form(default=None))
+                if arg.name != 'password' else arg.replace(default=Form())
                 for arg in cls.__signature__.parameters.values()
             ]
         )
