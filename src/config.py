@@ -1,3 +1,4 @@
+from pathlib import Path
 from dotenv import load_dotenv
 import os
 
@@ -13,10 +14,14 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
 
-file_path = os.path.abspath(__file__)
-dir_path = os.path.dirname(file_path)
+dir_path = Path(__file__).parent
+dir_path = dir_path.absolute()
 
-MEDIA_ROOT = os.path.join(dir_path, '../media/')
+MEDIA_ROOT = os.path.join(dir_path, 'media')
+AVATARS_DIR = os.path.join(MEDIA_ROOT, 'avatars')
 
 if not os.path.exists(MEDIA_ROOT):
     os.makedirs(MEDIA_ROOT)
+
+if not os.path.exists(AVATARS_DIR):
+    os.makedirs(AVATARS_DIR)

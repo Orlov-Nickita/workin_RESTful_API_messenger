@@ -11,9 +11,13 @@ Base = declarative_base()
 engine = create_async_engine(DATABASE_URL)
 async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
-# session = async_session()
-
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    """TODO"""
+    """
+    Функция асинхронного генератора, которая возвращает асинхронный контекстный менеджер для сеанса для работы с
+    асинхронным кодом и взаимодействия с базой данных.
+
+    Возвращается:
+    - Асинхронный генератор, который выдает объект асинхронного сеанса БД
+    """
     async with async_session() as session:
         yield session

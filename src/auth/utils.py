@@ -1,29 +1,40 @@
 from datetime import timedelta, datetime
+from typing import Dict
+
+import aiofiles
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.models import User
 from src.database import get_async_session
+from .models import pwd_context
 from .schemas import UserInDB, TokenData
 from src.config import SECRET_KEY, ALGORITHM
 
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
-def verify_password(plain_password, hashed_password):
-    """TODO"""
-
+def verify_password(plain_password: str, hashed_password: str):
+    """
+    Проверка пароля. Введенный пароль от пользователя сравнивается с хэшем пароля в БД
+    
+    Атрибуты:
+    plain_password (str): Введенный пароль
+    hashed_password (str): Хэш пароля в БД
+    """
     return pwd_context.verify(plain_password, hashed_password)
 
 
 async def get_user(username: str, session: AsyncSession) -> UserInDB:
-    """TODO"""
-
+    """
+    Получение объекта пользователя с его хэшем пароля из БД
+    
+    Атрибуты:
+    username (str): Никнейм пользователя
+    session (AsyncSession): Асинхронная сессия для выполнения запросов к базе данных
+    """
     a = await session.execute(select(User).where(User.username == username))
     a: User = a.scalars().first()
     if a:
@@ -31,8 +42,14 @@ async def get_user(username: str, session: AsyncSession) -> UserInDB:
 
 
 async def authenticate_user(username: str, password: str, session: AsyncSession) -> UserInDB | bool:
-    """TODO"""
-
+    """
+    Аутентификация пользователя
+    
+    Атрибуты:
+    username (str): Никнейм пользователя
+    password (str): Введенный пароль пользователя
+    session (AsyncSession): Асинхронная сессия для выполнения запросов к базе данных
+    """
     user = await get_user(username, session)
     if not user:
         return False
@@ -41,9 +58,14 @@ async def authenticate_user(username: str, password: str, session: AsyncSession)
     return user
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    """TODO"""
-
+def create_access_token(data: Dict[str, User.username], expires_delta: timedelta | None = None) -> str:
+    """
+    Создание токена доступа
+    
+    Атрибуты:
+    data (Dict[str, User.username]): Словарь с ключом sub и значением - никнейм пользователя
+    expires_delta (timedelta | None = None): Время сгорания токена. По умолчанию None. Значение передается в минутах
+    """
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -53,10 +75,20 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
 async def get_current_user(token: str = Depends(oauth2_scheme),
                            session: AsyncSession = Depends(get_async_session)) -> UserInDB:
-    """TODO"""
-
+    """
+    Получение объекта текущего пользователя из базы данных
+    
+    Атрибуты:
+    token (str): Токен авторизации пользователя.
+    session (AsyncSession): Асинхронная сессия для выполнения запросов к базе данных
+    
+    Исключения:
+    - HTTPException 401 UNAUTHORIZED: Если не удается проверить учетные данные пользователя.
+    """
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -74,3 +106,15 @@ async def get_current_user(token: str = Depends(oauth2_scheme),
     if user is None:
         raise credentials_exception
     return user
+
+
+async def write_to_disk(content: bytes, file_path: str):
+    """
+    Асинхронная функция скачивания файла
+    
+    Атрибуты:
+    content (bytes): Байтовая строка файла
+    file_path (str): Путь, куда скачиваем
+    """
+    async with aiofiles.open(file_path, mode='wb') as f:
+        await f.write(content)
